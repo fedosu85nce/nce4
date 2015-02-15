@@ -1,0 +1,32 @@
+    def _selectDisks(self):
+        selectDisks = SelectDisks(self._screen,
+                                  self._partitioner.disks)
+        (result, self._selectedDisks) = selectDisks.run()
+        # User must select at least one disk for partitioning
+        # Chosen to do automatical partitioning
+        if result == PART_BUTTON_AUTO.localize():
+            if len(self._selectedDisks) == 0:
+                MsgBox(self._screen, PART_TITLE_DISKERR.localize(),
+                       PART_ERROR_NODISK.localize())
+                return INDEX_SELECT_DISKS
+            self._partitioner.clearDisks(selectDisks)
+            return INDEX_AUTOMATIC_PARTITION
+        # Chosen to do manual partitioning
+        elif result == PART_BUTTON_MANUAL.localize():
+            if len(self._selectedDisks) == 0:
+                MsgBox(self._screen, PART_TITLE_DISKERR.localize(),
+                       PART_ERROR_NODISK.localize())
+                return INDEX_SELECT_DISKS
+            # Check is there any VG on the selected disks having dependency on
+            # the unchoosed disks, this may cause data unavailable, let user
+            # decide
+            lackDisks = self._partitioner.vgCrossDiskCheck(self._selectedDisks)
+            if lackDisks:
+                if self._confirmDeleteVg(lackDisks) == "cancel":
+                    return INDEX_SELECT_DISKS
+            self._partitioner.clearDisks(self._selectedDisks)
+            return INDEX_MANUAL_PARTITION
+        # Back to previous screen
+        else:
+            return INDEX_BACK
+

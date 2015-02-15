@@ -1,0 +1,110 @@
+From aad16b47c778ed6113e58ddf1194908c63bc00e6 Mon Sep 17 00:00:00 2001
+From: Tao Wu <bjwt@linux.vnet.ibm.com>
+Date: Tue, 10 Feb 2015 16:45:51 +0800
+Subject: [PATCH 3/3] Add checking VG cross disks function
+
+Signed-off-by: Tao Wu <bjwt@linux.vnet.ibm.com>
+---
+ .../newt/partitioncfg/partition_interface.py       | 42 ++++++++++++++--------
+ src/viewer/newt/partitioncfg/partitioner.py        | 15 ++++++++
+ 2 files changed, 43 insertions(+), 14 deletions(-)
+
+diff --git a/src/viewer/newt/partitioncfg/partition_interface.py b/src/viewer/newt/partitioncfg/partition_interface.py
+index 04167cd..9881196 100644
+--- a/src/viewer/newt/partitioncfg/partition_interface.py
++++ b/src/viewer/newt/partitioncfg/partition_interface.py
+@@ -56,6 +56,7 @@ class PartitionInterface:
+                 break
+             # 1. Select the disks used for partitioning
+             if index == INDEX_SELECT_DISKS:
++                # rescan the disks in case someone manually add/remove disk
+                 self._raw_partitioner._storage.reset()
+                 self._partitioner = self._raw_partitioner.copy()
+                 self._initialzePartitions()
+@@ -74,30 +75,43 @@ class PartitionInterface:
+             if index == INDEX_LIST_ACTIONS:
+                 index = self._listActions()
+ 
++    def _confirmDeleteVg(self, lackDisks):
++        diskNames=""
++        for disk in lackDisks:
++            diskNames+="\n%22s"%disk.name
++        text = "These disks you have seleceted include Volume Group consisting of Physical Volume also \
++on disks:\n  %22s \n\nwhich you have not chosen. This might cause the Logical Volume on these disks \
++unavailable, are you sure you will do this?\n\n"%diskNames
++        formatedText = reflow(text,50)[0]
++        rc = ButtonChoiceWindow(self._screen,"VG Cross disks",formatedText,width=50)
++        return rc
++
+     def _selectDisks(self):
+         selectDisks = SelectDisks(self._screen,
+                                   self._partitioner.disks)
+         (result, self._selectedDisks) = selectDisks.run()
++        # Quit Partition
++        if result == PART_BUTTON_BACK.localize():
++            return INDEX_BACK
+         # User must select at least one disk for partitioning
++        if len(self._selectedDisks) == 0:
++            MsgBox(self._screen, PART_TITLE_DISKERR.localize(),
++                   PART_ERROR_NODISK.localize())
++            return INDEX_SELECT_DISKS
++        # Check is there any VG on the selected disks having dependency on
++        # the unchoosed disks, this may cause data unavailable, let user
++        # decide
++        lackDisks = self._partitioner.vgCrossDiskCheck(self._selectedDisks)
++        if lackDisks:
++            if self._confirmDeleteVg(lackDisks) == "cancel":
++                return INDEX_SELECT_DISKS
++        self._partitioner.clearDisks(self._selectedDisks)
+         # Chosen to do automatical partitioning
+         if result == PART_BUTTON_AUTO.localize():
+-            if len(self._selectedDisks) == 0:
+-                MsgBox(self._screen, PART_TITLE_DISKERR.localize(),
+-                       PART_ERROR_NODISK.localize())
+-                return INDEX_SELECT_DISKS
+-            self._partitioner.clearDisks(selectDisks)
+             return INDEX_AUTOMATIC_PARTITION
+         # Chosen to do manual partitioning
+-        elif result == PART_BUTTON_MANUAL.localize():
+-            if len(self._selectedDisks) == 0:
+-                MsgBox(self._screen, PART_TITLE_DISKERR.localize(),
+-                       PART_ERROR_NODISK.localize())
+-                return INDEX_SELECT_DISKS
+-            self._partitioner.clearDisks(self._selectedDisks)
+-            return INDEX_MANUAL_PARTITION
+-        # Back to previous screen
+         else:
+-            return INDEX_BACK
++            return INDEX_MANUAL_PARTITION
+ 
+     def _manualPartition(self, runOn = "LPAR"):
+         '''Entry for manual partitioning 
+diff --git a/src/viewer/newt/partitioncfg/partitioner.py b/src/viewer/newt/partitioncfg/partitioner.py
+index f220ed6..0b954b1 100644
+--- a/src/viewer/newt/partitioncfg/partitioner.py
++++ b/src/viewer/newt/partitioncfg/partitioner.py
+@@ -54,6 +54,21 @@ class Partitioner:
+                 break
+         return allInDisk
+ 
++    def vgCrossDiskCheck(self, selectedDisks):
++        """ Check vgs on the selected disks, return a list of disks which are
++            required by these vgs but have not been selected by user.
++        """
++        lackDisks = []
++      
++        for disk in selectedDisks:
++          for vg in [d for d in self._storage.devicetree.getDependentDevices(disk) if isinstance(d, LVMVolumeGroupDevice)]:
++            for anc in vg.ancestors:
++              if isinstance(anc,DiskDevice) and anc not in selectedDisks + lackDisks:
++                lackDisks.append(anc)
++      
++        return lackDisks 
++
++
+     def getDeviceType(self, device):
+         return get_device_type(device)
+ 
+-- 
+1.9.3
+
