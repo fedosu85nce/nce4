@@ -204,7 +204,19 @@ class PartitionInterface:
             curPartition.current = True
             newPart = copy.copy(curPartition)
             self._partitions.append(newPart)
-        return INDEX_MANUAL_PARTITION
+            return INDEX_MANUAL_PARTITION
+        if ret == PART_BUTTON_BACK.localize():
+            tempPartition = TempPartition(self._screen,
+                                        self._partitioner,
+                                        self._partitions,
+                                        self._selectedDisks)
+            ret = tempPartition.run()
+            if ret == DEVICE_TYPE_LVM:
+                return INDEX_SELECT_VG
+            elif ret == DEVICE_TYPE_PARTITION:
+                return INDEX_SELECT_DISK
+            else:
+                return INDEX_MANUAL_PARTITION
 
     def _selectVg(self):
         #curPartition = self._getCurPartition()
@@ -232,18 +244,30 @@ class PartitionInterface:
             # Select existingVG
             else:
                 # This VG is created by zFrobisher
-                if selectVg.vg in self._partitioner.newVgs:
-                    self._partitioner.createLogicalVolume(curPartition,
-                                                          selectVg.vg.name,
-                                                          selectVg.size,  # size is property
-                                                          selectVg.disks)
+                #if selectVg.vg in self._partitioner.newVgs:
+                self._partitioner.createLogicalVolume(curPartition,
+                                                      selectVg.vg.name,
+                                                      selectVg.size,  # size is property
+                                                      selectVg.disks)
             for part in self._partitions:
                 if part.current:
                     part.current = False
             curPartition.current = True
             newPart = copy.copy(curPartition)
             self._partitions.append(newPart)
-        return INDEX_MANUAL_PARTITION
+            return INDEX_MANUAL_PARTITION
+        if ret == PART_BUTTON_BACK.localize():
+            tempPartition = TempPartition(self._screen,
+                                        self._partitioner,
+                                        self._partitions,
+                                        self._selectedDisks)
+            ret = tempPartition.run()
+            if ret == DEVICE_TYPE_LVM:
+                return INDEX_SELECT_VG
+            elif ret == DEVICE_TYPE_PARTITION:
+                return INDEX_SELECT_DISK
+            else:
+                return INDEX_MANUAL_PARTITION
 
     def _listActions(self):
         # Apply changes

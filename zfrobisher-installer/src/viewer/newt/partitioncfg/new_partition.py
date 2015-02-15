@@ -204,3 +204,16 @@ class ModifyPartition(NewPartition):
         self._partFS.setCurrent(curPartition.filesystem)
         self._partitioner._tempPartition.curPartition = curPartition
         self._partitioner._tempPartition.optType = "Modify"
+
+class TempPartition(NewPartition):
+    def __init__(self, screen, partitioner, partitions, disks):
+        NewPartition.__init__(self, screen, partitioner, partitions, disks)
+        self._setCurrentPartition()
+    def _setCurrentPartition(self):
+        curPartition = self._partitioner._tempPartition
+        self._partName.set(curPartition.name)
+        self._partMnt.set(curPartition.mountpoint)
+        self._partLabel.set(curPartition.label)
+        self._partCap.set("%s"%curPartition.capacity)
+        self._partDevTypes.setCurrent(curPartition.devicetype)
+        self._partFS.setCurrent(curPartition.filesystem)

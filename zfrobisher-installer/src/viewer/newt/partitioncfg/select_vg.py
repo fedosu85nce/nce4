@@ -181,6 +181,8 @@ class SelectVg:
         # Create current VG if not exist
         # Select current VG if exist
         if rc == PART_BUTTON_OK.localize():
+            if self._partitioner._tempPartition.optType == "Modify":
+                self._partitioner.deletePartition(self._partitioner._curPartition)
             if vg is None:
                 # Delete old LVM or Standard device if exist
                 # Create LVM device using this vg
