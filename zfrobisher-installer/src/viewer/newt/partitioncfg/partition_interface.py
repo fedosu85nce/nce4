@@ -15,6 +15,7 @@ from msg_box import *
 from new_partition import *
 from list_actions import *
 from blivet.devicefactory import DEVICE_TYPE_LVM, DEVICE_TYPE_PARTITION
+import copy
 
 #
 # CONSTANTS
@@ -150,19 +151,17 @@ class PartitionInterface:
              #self._partitions[0].current = True
             return INDEX_MANUAL_PARTITION
         if result == PART_BUTTON_MODIFY.localize():
-            curPartition = manualPartition.partList.current()
             #self._partitioner.deletePartition(curPartition)
+            self._partitioner._curPartition = manualPartition.partList.current()
             modifyPartition = ModifyPartition(self._screen,
                                         self._partitioner,
                                         self._partitions,
                                         self._selectedDisks,
-                                        curPartition)
+                                        self._partitioner._curPartition)
             ret = modifyPartition.run()
             if ret == DEVICE_TYPE_LVM:
-                self._partitioner.deletePartition(curPartition)
                 return INDEX_SELECT_VG
             elif ret == DEVICE_TYPE_PARTITION:
-                self._partitioner.deletePartition(curPartition)
                 return INDEX_SELECT_DISK
             else:
                 return INDEX_MANUAL_PARTITION
@@ -192,18 +191,27 @@ class PartitionInterface:
             return INDEX_SELECT_DISKS
 
     def _selectDisk(self):
-        curPartition = self._getCurPartition()
+        #curPartition = self._getCurPartition()
         # Select Disk for device type: Standard Partition
         selectDisk = SelectDisk(self._screen, self._partitioner,
-                                curPartition, self._selectedDisks)
+                                self._selectedDisks)
         ret = selectDisk.run()
+        if ret == PART_BUTTON_OK.localize():
+            curPartition = self._partitioner._tempPartition
+            for part in self._partitions:
+                if part.current:
+                    part.current = False
+            curPartition.current = True
+            newPart = copy.copy(curPartition)
+            self._partitions.append(newPart)
         return INDEX_MANUAL_PARTITION
 
     def _selectVg(self):
-        curPartition = self._getCurPartition()
+        #curPartition = self._getCurPartition()
         selectVg = SelectVg(self._screen, self._partitioner,
-                            self._selectedDisks, curPartition)
+                            self._selectedDisks)
         ret = selectVg.run()
+        curPartition = self._partitioner._tempPartition
         if ret == PART_BUTTON_DEL.localize():
             if selectVg.vg is not None:
                 self._partitioner.removeLogicalVolumeGroup(selectVg.vg,
@@ -229,6 +237,12 @@ class PartitionInterface:
                                                           selectVg.vg.name,
                                                           selectVg.size,  # size is property
                                                           selectVg.disks)
+            for part in self._partitions:
+                if part.current:
+                    part.current = False
+            curPartition.current = True
+            newPart = copy.copy(curPartition)
+            self._partitions.append(newPart)
         return INDEX_MANUAL_PARTITION
 
     def _listActions(self):

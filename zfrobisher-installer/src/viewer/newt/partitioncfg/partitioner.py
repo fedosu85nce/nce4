@@ -42,6 +42,7 @@ class Partitioner:
         self._configureLog(logger)
         self._partitions = []
         self._setEssentialPartitions()
+        self._tempPartition = Partition()
 
     def detectPreviousInstalls(self):
         pass
@@ -177,13 +178,6 @@ class Partitioner:
                 self.removeStandardPartition(curPartition)
         # Remove partiton information from partition list
         self._partitions.remove(curPartition)
-        # Put required parition back to the essentialParts
-        if curPartition.required:
-            title = curPartition.title
-            for part in self._essentialPartitions:
-                 if part.title == title:
-                     part.configured = False
-                     break
 
     def removeStandardPartition(self, partition):
         self._storage.destroyDevice(partition.device)
@@ -338,10 +332,10 @@ class Partitioner:
         self._root.required = True
         self._root.configured = False
 
-        self._essentialPartitions = []
-        self._essentialPartitions.append(self._boot)
-        self._essentialPartitions.append(self._swap)
-        self._essentialPartitions.append(self._root)
+        self._essentialPartitions = {}
+        self._essentialPartitions['/boot'] = self._boot
+        self._essentialPartitions['/root'] = self._root
+        self._essentialPartitions['swap'] = self._swap
 
     def checkEssentialPartitons(self):
         essentialParts = ["/root","/boot","swap"]

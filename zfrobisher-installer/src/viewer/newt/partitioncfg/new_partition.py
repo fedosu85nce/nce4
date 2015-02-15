@@ -138,23 +138,24 @@ class NewPartition:
         rc = self._buttonBar.buttonPressed(result)
 
         if rc == PART_BUTTON_OK.localize():
-            partition = Partition()
+            tempPartition = self._partitioner._tempPartition
             # Set title the same value of name
-            partition.title = self._partName.value()
-            partition.name = self._partName.value()
-            partition.mountpoint = self._partMnt.value()
-            partition.label = self._partLabel.value()
-            partition.capacity = strToSize(self._partCap.value())
-            partition.devicetype = self._partDevTypes.current()
-            partition.filesystem = self._partFS.current()
-            partition.required = self._required
+            tempPartition.title = self._partName.value()
+            tempPartition.name = self._partName.value()
+            tempPartition.mountpoint = self._partMnt.value()
+            tempPartition.label = self._partLabel.value()
+            tempPartition.capacity = strToSize(self._partCap.value())
+            tempPartition.devicetype = self._partDevTypes.current()
+            tempPartition.filesystem = self._partFS.current()
+            tempPartition.required = self._required
+            tempPartition.device = None
             # Set new partition as current
-            for part in self._partitions:
-                if part.current:
-                    part.current = False
-            partition.current = True
-            self._partitions.append(partition)
-            return partition.devicetype
+            #for part in self._partitions:
+            #    if part.current:
+            #        part.current = False
+            #tempPartition.current = True
+            #self._partitions.append(tempPartition)
+            return tempPartition.devicetype
 
         else:
             return "back"
@@ -162,19 +163,33 @@ class NewPartition:
 class AddPartition(NewPartition):
     def __init__(self, screen, partitioner, partitions, disks):
         NewPartition.__init__(self, screen, partitioner, partitions, disks)
-        self._setEssentialPart()
-    def _setEssentialPart(self):
-        for essentialPart in self._partitioner._essentialPartitions: 
-            if not essentialPart.configured:
-               self._partName.set(essentialPart.name)
-               self._partMnt.set(essentialPart.mountpoint)
-               self._partLabel.set(essentialPart.label)
-               self._partCap.set("%s"%essentialPart.capacity)
-               self._partDevTypes.setCurrent(essentialPart.devicetype)
-               self._partFS.setCurrent(essentialPart.filesystem)
-               self._required = True
-               essentialPart.configured = True
-               break
+        self.setEssentialPart()
+    def setEssentialPart(self):
+        essentialMountPoints = ['/boot','/root']
+        configuredMountpoints = []
+        configuredFileSystems = []
+        for part in self._partitions:
+            if part.mountpoint:
+                configuredMountpoints.append(part.mountpoint)
+            if part._filesystem:
+                configuredFileSystems.append(part.filesystem)
+        for mpt in essentialMountPoints:
+            if mpt not in configuredMountpoints:
+                self._setEssentialPart(mpt)
+                return
+        if 'swap' not in configuredFileSystems:
+            self._setEssentialPart('swap')
+    def _setEssentialPart(self, part):
+        essentialPart = self._partitioner._essentialPartitions[part]
+        self._partName.set(essentialPart.name)
+        self._partMnt.set(essentialPart.mountpoint)
+        self._partLabel.set(essentialPart.label)
+        self._partCap.set("%s"%essentialPart.capacity)
+        self._partDevTypes.setCurrent(essentialPart.devicetype)
+        self._partFS.setCurrent(essentialPart.filesystem)
+        self._required = True
+        self._partitioner._tempPartition.curPartition = None
+        self._partitioner._tempPartition.optType = "Add"
 
 class ModifyPartition(NewPartition):
     def __init__(self, screen, partitioner, partitions, disks, curPartition):
@@ -187,3 +202,5 @@ class ModifyPartition(NewPartition):
         self._partCap.set("%s"%curPartition.capacity)
         self._partDevTypes.setCurrent(curPartition.devicetype)
         self._partFS.setCurrent(curPartition.filesystem)
+        self._partitioner._tempPartition.curPartition = curPartition
+        self._partitioner._tempPartition.optType = "Modify"

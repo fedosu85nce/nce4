@@ -185,7 +185,7 @@ PART_BUTTON_DONE = _("DONE")
 
 # new partition form
 PART_TITLE_NEWPART = _("New Partition")
-PART_PROMPT_NEWPART = _("/boot, /root, and swap are essential partitions, make\
+PART_PROMPT_NEWPART = _("/boot, /root, and swap are essential partitions, make \
 sure these have been configured.")
 PART_FS_XFS = _("xfs")
 PART_FS_EXT3 = _("ext3")

@@ -41,12 +41,12 @@ class SelectVg:
     """
     Represents the disk selelction screen
     """
-    def __init__(self, screen, partitioner, disks, partition):
+    def __init__(self, screen, partitioner, disks):
         # 1. Store parameters
         self._screen = screen
         self._partitioner = partitioner
         self._disks = disks
-        self._partition = partition
+        self._partition = self._partitioner._tempPartition
 
         # 2. Build form components
         #   VG List

@@ -22,12 +22,12 @@ class SelectDisk:
     """
     Represents the disk selelction screen
     """
-    def __init__(self, screen, partitioner, partition, disks):
+    def __init__(self, screen, partitioner, disks):
         # 1. Store parameters
         self._screen = screen
         self._disks = disks
         self._partitioner = partitioner
-        self._partition = partition
+        self._partition = self._partitioner._tempPartition
 
         # 2.1 Remove LVM device if exist
         if self._partition.device is not None:
@@ -72,6 +72,8 @@ class SelectDisk:
         rc = self._buttonBar.buttonPressed(result)
 
         if rc == PART_BUTTON_OK.localize():
+            if self._partitioner._tempPartition.optType == "Modify":
+                self._partitioner.deletePartition(self._partitioner._curPartition)
             selectedDisk = self._diskList.current()
             self._partitioner.createStandardPartition(self._partition, selectedDisk)
-        return PART_BUTTON_OK.localize()
+        return rc
