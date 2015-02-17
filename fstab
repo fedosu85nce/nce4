@@ -1,4 +1,4 @@
-
+This is added via twu host --line1
 #
 # /etc/fstab
 # Created by anaconda on Mon Nov 10 07:36:35 2014
@@ -7,5 +7,6 @@
 # See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
 #
 UUID=b1d43838-d2b7-41aa-8a98-b10fac29d64e /                       ext4    defaults        1 1
+This is added via twu host --line10
 UUID=c7a97494-a866-486c-b8ca-90f4feb1639e /boot                   ext4    defaults        1 2
 UUID=5220cf6c-79e3-4004-92f0-ae733aeb6021 swap                    swap    defaults        0 0
