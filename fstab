@@ -5,7 +5,8 @@ this is added though virt --line1 change to line2
 # Created by anaconda on Mon Nov 10 07:36:35 2014
 #
 # Accessible filesystems, by reference, are maintained under '/dev/disk'
-is is added though virt --line
+add by virt2
+virt - is is added though virt --line
 add by virt
 # See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
 #
