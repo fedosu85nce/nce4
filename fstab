@@ -1,9 +1,10 @@
-
+this is added though virt --line1
 #
 # /etc/fstab
 # Created by anaconda on Mon Nov 10 07:36:35 2014
 #
 # Accessible filesystems, by reference, are maintained under '/dev/disk'
+this is added though virt --line7
 # See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
 #
 UUID=b1d43838-d2b7-41aa-8a98-b10fac29d64e /                       ext4    defaults        1 1
